@@ -75,13 +75,17 @@ const formatDeadline = (deadlineStr: string) => {
 }
 
 // 2. 초기 데이터 정의
-const zones = ['가나안', '갈릴리', '베레아', '사마리아']
+const zones = ['1구역', '2구역', '3구역', '4구역', '5구역', '6구역', '7구역', '8구역']
 
 const membersPerZone: Record<string, string[]> = {
-  '가나안': ['김민준', '박서연', '이도윤', '최하은', '정예은', '한지우'],
-  '갈릴리': ['강지훈', '서현우', '윤소희', '임민지'],
-  '베레아': ['김도현', '박준서', '최지아', '황민우'],
-  '사마리아': ['이지원', '조민수', '백지현', '송태양']
+  '1구역': ['김민준', '박서연', '이도윤', '최하은', '정예은', '한지우'],
+  '2구역': ['강지훈', '서현우', '윤소희', '임민지'],
+  '3구역': ['김도현', '박준서', '최지아', '황민우'],
+  '4구역': ['이지원', '조민수', '백지현', '송태양'],
+  '5구역': ['홍길동', '이순신', '강감찬'],
+  '6구역': ['유관순', '안중근', '윤봉길'],
+  '7구역': ['세종대왕', '이이', '신사임당'],
+  '8구역': ['김유신', '계백', '장보고']
 }
 
 const presets = [
@@ -117,7 +121,7 @@ const presets = [
 ]
 
 const initialResponses: ZoneResponses = {
-  '가나안': {
+  '1구역': {
     '김민준': { 'status': '참여', 'time': '18:00', 'note': '약간 늦을 수도 있습니다' },
     '박서연': { 'status': '참여', 'time': '18:30', 'note': '' },
     '이도윤': { 'status': '불참', 'reason': '회사 야근', 'note': '' },
@@ -125,45 +129,53 @@ const initialResponses: ZoneResponses = {
     '정예은': { 'status': '참여', 'time': '19:00', 'note': '' },
     '한지우': { 'status': '참여', 'time': '18:00', 'note': '' }
   },
-  '갈릴리': {
+  '2구역': {
     '강지훈': { 'status': '참여', 'time': '18:00', 'note': '' },
     '서현우': { 'status': '미정', 'time': '', 'note': '' },
     '윤소희': { 'status': '불참', 'reason': '가족 모임', 'note': '' },
     '임민지': { 'status': '미정', 'time': '', 'note': '' }
   },
-  '베레아': {
+  '3구역': {
     '김도현': { 'status': '미정', 'time': '', 'note': '' },
     '박준서': { 'status': '미정', 'time': '', 'note': '' },
     '최지아': { 'status': '미정', 'time': '', 'note': '' },
     '황민우': { 'status': '미정', 'time': '', 'note': '' }
   },
-  '사마리아': {
+  '4구역': {
     '이지원': { 'status': '미정', 'time': '', 'note': '' },
     '조민수': { 'status': '미정', 'time': '', 'note': '' },
     '백지현': { 'status': '미정', 'time': '', 'note': '' },
     '송태양': { 'status': '미정', 'time': '', 'note': '' }
-  }
+  },
+  '5구역': Object.fromEntries(['홍길동', '이순신', '강감찬'].map(m => [m, { 'status': '미정' }])),
+  '6구역': Object.fromEntries(['유관순', '안중근', '윤봉길'].map(m => [m, { 'status': '미정' }])),
+  '7구역': Object.fromEntries(['세종대왕', '이이', '신사임당'].map(m => [m, { 'status': '미정' }])),
+  '8구역': Object.fromEntries(['김유신', '계백', '장보고'].map(m => [m, { 'status': '미정' }]))
 }
 
 const initialStatus: Record<string, SubmissionStatus> = {
-  '가나안': 'submitted',
-  '갈릴리': 'draft',
-  '베레아': 'not_started',
-  '사마리아': 'not_started'
+  '1구역': 'submitted',
+  '2구역': 'draft',
+  '3구역': 'not_started',
+  '4구역': 'not_started',
+  '5구역': 'not_started',
+  '6구역': 'not_started',
+  '7구역': 'not_started',
+  '8구역': 'not_started'
 }
 
 export function TelegramMiniApp() {
   const [role, setRole] = useState<Role>('admin')
   const [screen, setScreen] = useState<Screen>('home')
   const [detail, setDetail] = useState<string | null>(null)
-  const [selectedZone, setSelectedZone] = useState<string>('베레아')
+  const [selectedZone, setSelectedZone] = useState<string>('3구역')
   const [published, setPublished] = useState(false)
 
   // 취합 환경설정 상태 (관리자가 생성하는 템플릿)
   const [config, setConfig] = useState({
     title: '정기 모임 출석',
     notice: '오늘 모임 참석 가능 여부와 도착 시각을 남겨주세요.',
-    targets: ['가나안', '갈릴리', '베레아', '사마리아'],
+    targets: ['1구역', '2구역', '3구역', '4구역', '5구역', '6구역', '7구역', '8구역'],
     deadline: `${getTodayString()} 18:00`,
     fields: [
       { id: 'status', label: '참석 여부', type: 'select', options: ['참여', '불참', '미정'] },
@@ -198,7 +210,7 @@ export function TelegramMiniApp() {
     return '설정'
   }, [detail, screen, role, selectedZone])
 
-  const roleLabel = role === 'admin' ? '총괄 관리자 · 서기' : '구역장 · 베레아'
+  const roleLabel = role === 'admin' ? '총괄 관리자 · 서기' : '구역장 · 3구역'
 
   // 취합 게시(생성) 처리 함수
   const handlePublish = (newConfig: typeof config) => {
@@ -411,7 +423,7 @@ function HomeView({
     (z: string) => submissionStatus[z] === 'submitted' || submissionStatus[z] === 'draft'
   ).length
   
-  const userZone = '베레아'
+  const userZone = '3구역'
   const userMembers = membersPerZone[userZone] || []
   const userCompleted = userMembers.filter(
     (m) => responses[userZone]?.[m]?.['status'] && responses[userZone]?.[m]?.['status'] !== '미정'
@@ -495,7 +507,7 @@ function HomeView({
             <QuickCard
               icon={ClipboardCheck}
               title="오늘 출석 기록"
-              text="베레아 구역 4명 개별 터치 기록"
+              text="3구역 4명 개별 터치 기록"
               onClick={() => setScreen('attendance')}
             />
           </>
@@ -618,7 +630,7 @@ function TasksView({
             if (role === 'admin') {
               setDetail('active')
             } else {
-              setSelectedZone('베레아') // 구역장 데모 구역
+              setSelectedZone('3구역') // 구역장 데모 구역
               setDetail('submit')
             }
           }}
@@ -1652,8 +1664,8 @@ function AttendanceView({
   completed,
   setDetail
 }: AttendanceViewProps) {
-  // 베레아 구역 명단
-  const bereaMembers = membersPerZone['베레아']
+  // 3구역 명단
+  const bereaMembers = membersPerZone['3구역']
 
   return (
     <div className="flex flex-col gap-5">
@@ -1666,7 +1678,7 @@ function AttendanceView({
         <CardContent className="p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-muted-foreground">베레아 구역 출석율</p>
+              <p className="text-xs text-muted-foreground">3구역 출석율</p>
               <p className="mt-1 text-2xl font-black tracking-tight">
                 {completed} <span className="text-sm font-medium text-muted-foreground"> / {bereaMembers.length}명</span>
               </p>
@@ -1756,7 +1768,7 @@ function SettingsView({ role, setRole }: SettingsViewProps) {
               총괄 관리자 (서기)
             </ToggleGroupItem>
             <ToggleGroupItem value="user" className="text-xs font-semibold h-full border-0 rounded-none">
-              구역장 (베레아)
+              구역장 (3구역)
             </ToggleGroupItem>
           </ToggleGroup>
         </CardContent>
@@ -1770,7 +1782,7 @@ function SettingsView({ role, setRole }: SettingsViewProps) {
           <div className="min-w-0">
             <p className="font-bold text-sm tracking-tight">김도현</p>
             <p className="text-xs text-muted-foreground">
-              {role === 'admin' ? '총괄 관리자 · 서기' : '베레아 구역 · 구역장'}
+              {role === 'admin' ? '총괄 관리자 · 서기' : '3구역 · 구역장'}
             </p>
           </div>
           <ChevronRight className="ml-auto size-4 text-muted-foreground" />
