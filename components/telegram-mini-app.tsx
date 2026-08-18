@@ -417,7 +417,7 @@ function HomeView({
     (m) => responses[userZone]?.[m]?.['status'] && responses[userZone]?.[m]?.['status'] !== '미정'
   ).length
 
-  const realTimeValue = role === 'admin' ? `${activeZones}개 구역` : `${userCompleted}/${userMembers.length}명`
+  const realTimeValue = role === 'admin' ? `${activeZones}건` : `${userCompleted}/${userMembers.length}명`
 
   // 3. 게시해야 하는 취합 (관리자) / 마감 임박 취합 (사용자)
   const toPublishCount = published ? 0 : 1
