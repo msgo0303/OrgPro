@@ -385,12 +385,12 @@ function HomeView({
   responses,
   submissionStatus
 }: HomeViewProps) {
-  // 응답 현황 계산
   const targetZones = config.targets
-  const submittedCount = targetZones.filter((z: string) => submissionStatus[z] === 'submitted').length
-  const totalZones = targetZones.length
-  
-  // 전체 구역원 수 대비 응답 완료 비율 계산
+
+  // 1. 진행 중인 취합
+  const ongoingCount = published ? 2 : 1
+
+  // 전체 구역원 수 대비 응답 완료 비율 계산 (최근 활동 카드용)
   let totalMembers = 0
   let answeredMembers = 0
   targetZones.forEach((zone: string) => {
@@ -406,6 +406,23 @@ function HomeView({
   
   const completionRate = totalMembers > 0 ? Math.round((answeredMembers / totalMembers) * 100) : 0
 
+  // 2. 실시간 취합 (관리자: 제출/임시저장 진행 중인 구역 수, 사용자: 본인 구역 완료된 인원 수)
+  const activeZones = targetZones.filter(
+    (z: string) => submissionStatus[z] === 'submitted' || submissionStatus[z] === 'draft'
+  ).length
+  
+  const userZone = '베레아'
+  const userMembers = membersPerZone[userZone] || []
+  const userCompleted = userMembers.filter(
+    (m) => responses[userZone]?.[m]?.['status'] && responses[userZone]?.[m]?.['status'] !== '미정'
+  ).length
+
+  const realTimeValue = role === 'admin' ? `${activeZones}개 구역` : `${userCompleted}/${userMembers.length}명`
+
+  // 3. 게시해야 하는 취합 (관리자) / 마감 임박 취합 (사용자)
+  const toPublishCount = published ? 0 : 1
+  const urgentCount = published ? 2 : 1
+
   return (
     <div className="flex flex-col gap-5">
       {/* 상태 보드 카드 */}
@@ -420,9 +437,19 @@ function HomeView({
           </div>
         </div>
         <div className="mt-6 grid grid-cols-3 gap-2.5">
-          <Stat label="진행 중인 취합" value="1건" />
-          <Stat label="구역 완료율" value={`${submittedCount}/${totalZones}구역`} />
-          <Stat label="구역원 응답률" value={`${completionRate}%`} />
+          {role === 'admin' ? (
+            <>
+              <Stat label="진행 중인 취합" value={`${ongoingCount}건`} />
+              <Stat label="실시간 취합" value={realTimeValue} />
+              <Stat label="게시해야 하는 취합" value={`${toPublishCount}건`} />
+            </>
+          ) : (
+            <>
+              <Stat label="진행 중인 취합" value={`${ongoingCount}건`} />
+              <Stat label="실시간 취합" value={realTimeValue} />
+              <Stat label="마감 임박 취합" value={`${urgentCount}건`} />
+            </>
+          )}
         </div>
       </div>
 
