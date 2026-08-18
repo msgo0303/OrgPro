@@ -51,6 +51,29 @@ export interface CustomField {
 type ZoneResponses = Record<string, Record<string, Record<string, string>>>
 type SubmissionStatus = 'not_started' | 'draft' | 'submitted'
 
+const getTodayString = () => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+const formatDeadline = (deadlineStr: string) => {
+  try {
+    const parts = deadlineStr.split(' ')
+    if (parts.length === 2 && parts[0].includes('-')) {
+      const [datePart, timePart] = parts
+      const todayStr = getTodayString()
+      if (datePart === todayStr) {
+        return `오늘 ${timePart}`
+      }
+      return `${datePart} ${timePart}`
+    }
+  } catch (e) {}
+  return deadlineStr
+}
+
 // 2. 초기 데이터 정의
 const zones = ['가나안', '갈릴리', '베레아', '사마리아']
 
@@ -141,7 +164,7 @@ export function TelegramMiniApp() {
     title: '정기 모임 출석',
     notice: '오늘 모임 참석 가능 여부와 도착 시각을 남겨주세요.',
     targets: ['가나안', '갈릴리', '베레아', '사마리아'],
-    deadline: '오늘 18:00',
+    deadline: `${getTodayString()} 18:00`,
     fields: [
       { id: 'status', label: '참석 여부', type: 'select', options: ['참여', '불참', '미정'] },
       { id: 'time', label: '도착 시각', type: 'chips', options: ['18:00', '18:30', '19:00'], showIfFieldId: 'status', showIfValue: '참여' },
@@ -578,7 +601,7 @@ function TasksView({
             <div>
               <p className="font-bold text-base tracking-tight">{config.title}</p>
               <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock3 className="size-3.5" /> 마감: {config.deadline}
+                <Clock3 className="size-3.5" /> 마감: {formatDeadline(config.deadline)}
               </p>
             </div>
             <Badge variant="default" className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold">
@@ -629,8 +652,30 @@ function NewAggregation({ config, onPublish }: NewAggregationProps) {
   const [title, setTitle] = useState(config.title)
   const [notice, setNotice] = useState(config.notice)
   const [targets, setTargets] = useState<string[]>(config.targets)
-  const [deadline, setDeadline] = useState(config.deadline)
   const [fields, setFields] = useState<CustomField[]>(config.fields)
+
+  const initialParts = useMemo(() => {
+    try {
+      const parts = config.deadline.split(' ')
+      if (parts.length === 2 && parts[0].includes('-')) {
+        return { date: parts[0], time: parts[1] }
+      }
+    } catch (e) {}
+    return { date: getTodayString(), time: '18:00' }
+  }, [config.deadline])
+
+  const [deadlineDate, setDeadlineDate] = useState(initialParts.date)
+  const [deadlineTime, setDeadlineTime] = useState(initialParts.time)
+
+  const timeOptions = useMemo(() => {
+    const options = []
+    for (let hour = 0; hour < 24; hour++) {
+      const hh = String(hour).padStart(2, '0')
+      options.push(`${hh}:00`)
+      options.push(`${hh}:30`)
+    }
+    return options
+  }, [])
 
   // 신규 필드 추가 임시 상태
   const [newLabel, setNewLabel] = useState('')
@@ -747,15 +792,28 @@ function NewAggregation({ config, onPublish }: NewAggregationProps) {
               })}
             </div>
           </div>
-          <label className="flex flex-col gap-1.5 text-xs font-bold text-muted-foreground uppercase">
-            응답 마감 기한
-            <Input
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              placeholder="예: 오늘 18:00, 수요일 오전"
-              className="h-11 rounded-xl text-sm border-border/80 text-foreground"
-            />
-          </label>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-bold text-muted-foreground uppercase">응답 마감 시간</span>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                type="date"
+                value={deadlineDate}
+                onChange={(e) => setDeadlineDate(e.target.value)}
+                className="h-11 rounded-xl text-sm border-border/80 text-foreground"
+              />
+              <select
+                value={deadlineTime}
+                onChange={(e) => setDeadlineTime(e.target.value)}
+                className="h-11 rounded-xl text-sm border border-border/80 bg-background px-3 text-foreground"
+              >
+                {timeOptions.map((time) => (
+                  <option key={time} value={time}>
+                    {time}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -951,7 +1009,7 @@ function NewAggregation({ config, onPublish }: NewAggregationProps) {
             alert('최소 1개 이상의 설문 항목을 추가해 주세요.')
             return
           }
-          onPublish({ title, notice, targets, deadline, fields })
+          onPublish({ title, notice, targets, deadline: `${deadlineDate} ${deadlineTime}`, fields })
         }}
       >
         <Send className="mr-2 size-4" /> 커스텀 취합 게시하기
@@ -1000,7 +1058,7 @@ function ActiveAggregation({
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>
-              <CardDescription>응답 마감 · {config.deadline}</CardDescription>
+              <CardDescription>응답 마감 · {formatDeadline(config.deadline)}</CardDescription>
               <CardTitle className="mt-1 text-xl font-bold tracking-tight">{config.title}</CardTitle>
             </div>
             <Badge className="rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-100 font-medium">
@@ -1357,7 +1415,7 @@ function SubmissionDetail({
       {/* 헤더 정보 */}
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">마감 시간: {config.deadline}</p>
+          <p className="text-xs text-muted-foreground">마감 시간: {formatDeadline(config.deadline)}</p>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-muted-foreground">구역 선택:</span>
             <select
