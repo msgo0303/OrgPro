@@ -95,7 +95,9 @@ const presets = [
     notice: '오늘 모임 참석 가능 여부와 도착 시각을 남겨주세요.',
     fields: [
       { id: 'status', label: '참석 여부', type: 'select', options: ['참여', '불참', '미정'] },
-      { id: 'time', label: '도착 시각', type: 'chips', options: ['18:00', '18:30', '19:00'], showIfFieldId: 'status', showIfValue: '참여' },
+      { id: 'wakeup', label: '기상 시간', type: 'time', showIfFieldId: 'status', showIfValue: '참여' },
+      { id: 'depart', label: '출발 시간', type: 'time', showIfFieldId: 'status', showIfValue: '참여' },
+      { id: 'arrive', label: '도착 시간', type: 'time', showIfFieldId: 'status', showIfValue: '참여' },
       { id: 'reason', label: '불참 사유', type: 'text', showIfFieldId: 'status', showIfValue: '불참' },
       { id: 'note', label: '짧은 메모', type: 'text' }
     ] as CustomField[]
@@ -122,30 +124,30 @@ const presets = [
 
 const initialResponses: ZoneResponses = {
   '1구역': {
-    '김민준': { 'status': '참여', 'time': '18:00', 'note': '약간 늦을 수도 있습니다' },
-    '박서연': { 'status': '참여', 'time': '18:30', 'note': '' },
+    '김민준': { 'status': '참여', 'wakeup': '07:30', 'depart': '08:00', 'arrive': '18:00', 'note': '약간 늦을 수도 있습니다' },
+    '박서연': { 'status': '참여', 'wakeup': '08:00', 'depart': '08:30', 'arrive': '18:30', 'note': '' },
     '이도윤': { 'status': '불참', 'reason': '회사 야근', 'note': '' },
-    '최하은': { 'status': '참여', 'time': '18:00', 'note': '' },
-    '정예은': { 'status': '참여', 'time': '19:00', 'note': '' },
-    '한지우': { 'status': '참여', 'time': '18:00', 'note': '' }
+    '최하은': { 'status': '참여', 'wakeup': '07:15', 'depart': '07:45', 'arrive': '18:00', 'note': '' },
+    '정예은': { 'status': '참여', 'wakeup': '08:20', 'depart': '08:50', 'arrive': '19:00', 'note': '' },
+    '한지우': { 'status': '참여', 'wakeup': '07:30', 'depart': '08:00', 'arrive': '18:00', 'note': '' }
   },
   '2구역': {
-    '강지훈': { 'status': '참여', 'time': '18:00', 'note': '' },
-    '서현우': { 'status': '미정', 'time': '', 'note': '' },
+    '강지훈': { 'status': '참여', 'wakeup': '07:30', 'depart': '08:00', 'arrive': '18:00', 'note': '' },
+    '서현우': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' },
     '윤소희': { 'status': '불참', 'reason': '가족 모임', 'note': '' },
-    '임민지': { 'status': '미정', 'time': '', 'note': '' }
+    '임민지': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' }
   },
   '3구역': {
-    '김도현': { 'status': '미정', 'time': '', 'note': '' },
-    '박준서': { 'status': '미정', 'time': '', 'note': '' },
-    '최지아': { 'status': '미정', 'time': '', 'note': '' },
-    '황민우': { 'status': '미정', 'time': '', 'note': '' }
+    '김도현': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' },
+    '박준서': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' },
+    '최지아': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' },
+    '황민우': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' }
   },
   '4구역': {
-    '이지원': { 'status': '미정', 'time': '', 'note': '' },
-    '조민수': { 'status': '미정', 'time': '', 'note': '' },
-    '백지현': { 'status': '미정', 'time': '', 'note': '' },
-    '송태양': { 'status': '미정', 'time': '', 'note': '' }
+    '이지원': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' },
+    '조민수': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' },
+    '백지현': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' },
+    '송태양': { 'status': '미정', 'wakeup': '', 'depart': '', 'arrive': '', 'note': '' }
   },
   '5구역': Object.fromEntries(['홍길동', '이순신', '강감찬'].map(m => [m, { 'status': '미정' }])),
   '6구역': Object.fromEntries(['유관순', '안중근', '윤봉길'].map(m => [m, { 'status': '미정' }])),
@@ -179,7 +181,9 @@ export function TelegramMiniApp() {
     deadline: `${getTodayString()} 18:00`,
     fields: [
       { id: 'status', label: '참석 여부', type: 'select', options: ['참여', '불참', '미정'] },
-      { id: 'time', label: '도착 시각', type: 'chips', options: ['18:00', '18:30', '19:00'], showIfFieldId: 'status', showIfValue: '참여' },
+      { id: 'wakeup', label: '기상 시간', type: 'time', showIfFieldId: 'status', showIfValue: '참여' },
+      { id: 'depart', label: '출발 시간', type: 'time', showIfFieldId: 'status', showIfValue: '참여' },
+      { id: 'arrive', label: '도착 시간', type: 'time', showIfFieldId: 'status', showIfValue: '참여' },
       { id: 'reason', label: '불참 사유', type: 'text', showIfFieldId: 'status', showIfValue: '불참' },
       { id: 'note', label: '짧은 메모', type: 'text' }
     ] as CustomField[]
@@ -907,7 +911,7 @@ function NewAggregation({ config, onPublish }: NewAggregationProps) {
                     <span className="text-xs font-bold text-primary">Q{idx + 1}</span>
                     <span className="text-sm font-semibold tracking-tight">{field.label}</span>
                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 rounded-md font-normal text-muted-foreground">
-                      {field.type === 'select' ? '목록형' : field.type === 'chips' ? '선택형' : '텍스트'}
+                      {field.type === 'select' ? '목록형' : field.type === 'chips' ? '선택형' : field.type === 'time' ? '시간형' : '텍스트'}
                     </Badge>
                   </div>
                   {field.options && (
@@ -961,11 +965,12 @@ function NewAggregation({ config, onPublish }: NewAggregationProps) {
                   type="single"
                   value={newType}
                   onValueChange={(v) => v && setNewType(v as FieldType)}
-                  className="grid grid-cols-3 border border-border rounded-lg overflow-hidden h-9 bg-background"
+                  className="grid grid-cols-4 border border-border rounded-lg overflow-hidden h-9 bg-background"
                 >
                   <ToggleGroupItem value="chips" className="text-[10px] font-medium h-full border-0">선택형</ToggleGroupItem>
                   <ToggleGroupItem value="select" className="text-[10px] font-medium h-full border-0">목록형</ToggleGroupItem>
                   <ToggleGroupItem value="text" className="text-[10px] font-medium h-full border-0">텍스트</ToggleGroupItem>
+                  <ToggleGroupItem value="time" className="text-[10px] font-medium h-full border-0">시간</ToggleGroupItem>
                 </ToggleGroup>
               </div>
               
@@ -974,7 +979,7 @@ function NewAggregation({ config, onPublish }: NewAggregationProps) {
                 <Input
                   value={newOptionsText}
                   onChange={(e) => setNewOptionsText(e.target.value)}
-                  disabled={newType === 'text'}
+                  disabled={newType === 'text' || newType === 'time'}
                   placeholder="예: 신청함, 신청안함"
                   className="h-9 text-xs rounded-lg border-border/80 bg-background"
                 />
@@ -1419,11 +1424,16 @@ function SubmissionDetail({
         
         const val = resp[field.id]
         if (val) {
-          details.push(`${field.label}: ${val}`)
+          if (field.type === 'time') {
+            const shortLabel = field.label.replace(' 시간', '').replace(' 시각', '')
+            details.push(`${shortLabel} ${val}`)
+          } else {
+            details.push(`${field.label}: ${val}`)
+          }
         }
       })
 
-      const detailsStr = details.length > 0 ? ` (${details.join(', ')})` : ''
+      const detailsStr = details.length > 0 ? ` (${details.join(' | ')})` : ''
       lines.push(`- ${member}: ${statusText}${detailsStr}`)
     })
 
@@ -1542,6 +1552,9 @@ function SubmissionDetail({
                       }
                     }
 
+                    const val = memberResponse[field.id] || ''
+                    const [h, m] = val.includes(':') ? val.split(':') : ['', '']
+
                     // 2. 타입에 맞춰 인풋 컴포넌트 출력
                     return (
                       <div key={field.id} className="flex flex-col gap-1.5 w-full">
@@ -1599,6 +1612,49 @@ function SubmissionDetail({
                             onChange={(e) => handleUpdateField(member, field.id, e.target.value)}
                             className="h-9 text-xs rounded-lg border-border/80"
                           />
+                        )}
+
+                        {field.type === 'time' && (
+                          <div className="flex gap-2">
+                            <select
+                              value={h}
+                              onChange={(e) => {
+                                const newHour = e.target.value
+                                const newMin = m || '00'
+                                handleUpdateField(member, field.id, newHour && newMin ? `${newHour}:${newMin}` : '')
+                              }}
+                              className="h-9 flex-1 text-xs rounded-lg border border-border/80 bg-background px-2.5"
+                            >
+                              <option value="">시 선택</option>
+                              {Array.from({ length: 24 }).map((_, hour) => {
+                                const hh = String(hour).padStart(2, '0')
+                                return (
+                                  <option key={hh} value={hh}>
+                                    {hh}시
+                                  </option>
+                                )
+                              })}
+                            </select>
+                            <select
+                              value={m}
+                              onChange={(e) => {
+                                const newMin = e.target.value
+                                const newHour = h || '07'
+                                handleUpdateField(member, field.id, newHour && newMin ? `${newHour}:${newMin}` : '')
+                              }}
+                              className="h-9 flex-1 text-xs rounded-lg border border-border/80 bg-background px-2.5"
+                            >
+                              <option value="">분 선택</option>
+                              {Array.from({ length: 12 }).map((_, step) => {
+                                const mm = String(step * 5).padStart(2, '0')
+                                return (
+                                  <option key={mm} value={mm}>
+                                    {mm}분
+                                  </option>
+                                )
+                              })}
+                            </select>
+                          </div>
                         )}
                       </div>
                     )
